@@ -1,4 +1,4 @@
-name: Build & Release APK
+name: Build & Release Signed APK
 
 on:
   push:
@@ -26,11 +26,16 @@ jobs:
     - name: Generate Gradle Wrapper
       run: gradle wrapper --gradle-version 8.2
 
+    - name: Decode Keystore
+      run: |
+        echo "${{ secrets.SIGNING_KEYSTORE }}" | base64 -d > app/github-viewer.keystore
+
+    - name: Build Signed Release APK
+      run: |
+        ./gradlew assembleRelease           -Pandroid.injected.signing.store.file=../github-viewer.keystore           -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}           -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}           -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
     - name: Build Debug APK
       run: ./gradlew assembleDebug
-
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -38,11 +43,11 @@ jobs:
         name: GitHubRepoViewer-debug
         path: app/build/outputs/apk/debug/app-debug.apk
 
-    - name: Upload Release APK
+    - name: Upload Signed Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: GitHubRepoViewer-release
-        path: app/build/outputs/apk/release/app-release-unsigned.apk
+        name: GitHubRepoViewer-signed-release
+        path: app/build/outputs/apk/release/app-release.apk
 
     - name: Create Release
       id: create_release
@@ -51,20 +56,35 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.0.${{ github.run_number }}
-        release_name: GitHub Repo Viewer v1.0.${{ github.run_number }}
+        release_name: GitHub Repo Viewer v1.0.${{ github.run_number }} 🔐 موقّع رقمياً
         body: |
-          ## GitHub Repo Viewer - إصدار جديد 🚀
+          ## GitHub Repo Viewer - إصدار موقّع رقمياً 🚀🔐
 
           ### الملفات المتوفرة:
-          - `app-debug.apk` — APK debug (قابل للتثبيت مباشرة)
-          - `app-release-unsigned.apk` — APK release بدون توقيع
+          - `app-release.apk` ✅ **موقّع رقمياً** — جاهز للتثبيت والنشر
+          - `app-debug.apk` — APK debug
 
           ### طريقة التثبيت:
-          1. حمل `app-debug.apk`
-          2. فعّل "تثبيت من مصادر غير معروفة" في إعدادات الجهاز
-          3. ثبّت APK
+          1. حمل `app-release.apk`
+          2. فعّل "تثبيت من مصادر غير معروفة"
+          3. ثبّت APK مباشرة
+
+          ### معلومات التوقيع:
+          - CN: GitHub Repo Viewer
+          - Validity: 10,000 days
+          - Algorithm: SHA256withRSA
         draft: false
         prerelease: false
+
+    - name: Upload Signed APK to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: app/build/outputs/apk/release/app-release.apk
+        asset_name: GitHubRepoViewer-v1.0.${{ github.run_number }}-signed.apk
+        asset_content_type: application/vnd.android.package-archive
 
     - name: Upload Debug APK to Release
       uses: actions/upload-release-asset@v1
@@ -74,14 +94,4 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: app/build/outputs/apk/debug/app-debug.apk
         asset_name: GitHubRepoViewer-v1.0.${{ github.run_number }}-debug.apk
-        asset_content_type: application/vnd.android.package-archive
-
-    - name: Upload Release APK to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: app/build/outputs/apk/release/app-release-unsigned.apk
-        asset_name: GitHubRepoViewer-v1.0.${{ github.run_number }}-release-unsigned.apk
         asset_content_type: application/vnd.android.package-archive
