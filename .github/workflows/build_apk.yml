@@ -5,14 +5,47 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: reactnativecommunity/react-native-android
     steps:
     - uses: actions/checkout@v4
 
-    - name: Build Debug APK
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Install Android SDK
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        cd $HOME/android-sdk/cmdline-tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -q commandlinetools-linux-11076708_latest.zip
+        mv cmdline-tools latest
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        yes | sdkmanager --licenses || true
+        sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+    - name: Install Gradle
+      run: |
+        wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+        unzip -q gradle-8.2-bin.zip
+        sudo mv gradle-8.2 /opt/gradle
+        sudo ln -sf /opt/gradle/bin/gradle /usr/local/bin/gradle
+        gradle --version
+
+    - name: Generate Gradle Wrapper
       run: |
         gradle wrapper --gradle-version 8.2
         chmod +x gradlew
+
+    - name: Build Debug APK
+      run: |
+        export ANDROID_HOME=$HOME/android-sdk
         ./gradlew assembleDebug --stacktrace
         ls -la app/build/outputs/apk/debug/
 
