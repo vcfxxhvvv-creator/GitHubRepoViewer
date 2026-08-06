@@ -16,19 +16,30 @@ jobs:
 
     - name: Install Android SDK
       run: |
+        # Unset any existing ANDROID_HOME to avoid conflicts
+        unset ANDROID_HOME
+        unset ANDROID_SDK_ROOT
+
         sudo apt-get update
         sudo apt-get install -y wget unzip
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        cd $HOME/android-sdk/cmdline-tools
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip -q commandlinetools-linux-11076708_latest.zip
-        mv cmdline-tools latest
-        export ANDROID_HOME=$HOME/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-        yes | sdkmanager --licenses || true
-        sdkmanager "platforms;android-34" "build-tools;34.0.0"
-        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+        # Install Android SDK to a fixed location
+        export ANDROID_HOME=/usr/local/android-sdk
+        sudo mkdir -p $ANDROID_HOME/cmdline-tools
+        cd $ANDROID_HOME/cmdline-tools
+        sudo wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        sudo unzip -q commandlinetools-linux-11076708_latest.zip
+        sudo mv cmdline-tools latest
+
+        # Accept licenses and install platforms
+        yes | sudo $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        sudo $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+        # Set environment variables for subsequent steps
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
 
     - name: Install Gradle
       run: |
@@ -38,14 +49,19 @@ jobs:
         sudo ln -sf /opt/gradle/bin/gradle /usr/local/bin/gradle
         gradle --version
 
-    - name: Generate Gradle Wrapper
+    - name: Generate Gradle Wrapper & Set SDK
       run: |
         gradle wrapper --gradle-version 8.2
         chmod +x gradlew
+        # Create local.properties with correct SDK path
+        echo "sdk.dir=/usr/local/android-sdk" > local.properties
+        echo "sdk.dir=/usr/local/android-sdk" > app/local.properties
+        cat local.properties
 
     - name: Build Debug APK
       run: |
-        export ANDROID_HOME=$HOME/android-sdk
+        export ANDROID_HOME=/usr/local/android-sdk
+        export ANDROID_SDK_ROOT=/usr/local/android-sdk
         ./gradlew assembleDebug --stacktrace
         ls -la app/build/outputs/apk/debug/
 
