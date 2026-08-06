@@ -29,10 +29,15 @@ jobs:
     - name: Decode Keystore
       run: |
         echo "${{ secrets.SIGNING_KEYSTORE }}" | base64 -d > app/github-viewer.keystore
+        ls -la app/github-viewer.keystore
 
     - name: Build Signed Release APK
+      env:
+        KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       run: |
-        ./gradlew assembleRelease           -Pandroid.injected.signing.store.file=../github-viewer.keystore           -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}           -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}           -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        ./gradlew assembleRelease           -Pandroid.injected.signing.store.file=$(pwd)/app/github-viewer.keystore           -Pandroid.injected.signing.store.password="$KS_PASS"           -Pandroid.injected.signing.key.alias="$KEY_ALIAS"           -Pandroid.injected.signing.key.password="$KEY_PASS"
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug
@@ -56,23 +61,13 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.0.${{ github.run_number }}
-        release_name: GitHub Repo Viewer v1.0.${{ github.run_number }} 🔐 موقّع رقمياً
+        release_name: GitHub Repo Viewer v1.0.${{ github.run_number }}
         body: |
-          ## GitHub Repo Viewer - إصدار موقّع رقمياً 🚀🔐
+          ## GitHub Repo Viewer - إصدار موقّع رقمياً
 
           ### الملفات المتوفرة:
-          - `app-release.apk` ✅ **موقّع رقمياً** — جاهز للتثبيت والنشر
-          - `app-debug.apk` — APK debug
-
-          ### طريقة التثبيت:
-          1. حمل `app-release.apk`
-          2. فعّل "تثبيت من مصادر غير معروفة"
-          3. ثبّت APK مباشرة
-
-          ### معلومات التوقيع:
-          - CN: GitHub Repo Viewer
-          - Validity: 10,000 days
-          - Algorithm: SHA256withRSA
+          - `app-release.apk` ✅ موقّع رقمياً
+          - `app-debug.apk`
         draft: false
         prerelease: false
 
