@@ -1,16 +1,13 @@
-name: Build & Release Signed APK
+name: Build APK
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -18,75 +15,24 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.2'
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-    - name: Generate Gradle Wrapper
-      run: gradle wrapper --gradle-version 8.2
+    - name: Grant execute permission for gradlew
+      run: |
+        gradle wrapper --gradle-version 8.2
+        chmod +x gradlew
 
     - name: Decode Keystore
+      run: echo "${{ secrets.SIGNING_KEYSTORE }}" | base64 -d > app/keystore.jks
+
+    - name: Build Signed APK
       run: |
-        echo "${{ secrets.SIGNING_KEYSTORE }}" | base64 -d > app/github-viewer.keystore
-        ls -la app/github-viewer.keystore
+        ./gradlew assembleRelease           -Pandroid.injected.signing.store.file=keystore.jks           -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}           -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}           -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+      working-directory: app
 
-    - name: Build Signed Release APK
-      env:
-        KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_PASS: ${{ secrets.KEY_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-      run: |
-        ./gradlew assembleRelease           -Pandroid.injected.signing.store.file=$(pwd)/app/github-viewer.keystore           -Pandroid.injected.signing.store.password="$KS_PASS"           -Pandroid.injected.signing.key.alias="$KEY_ALIAS"           -Pandroid.injected.signing.key.password="$KEY_PASS"
-
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
-
-    - name: Upload Debug APK
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: GitHubRepoViewer-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
-
-    - name: Upload Signed Release APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: GitHubRepoViewer-signed-release
+        name: signed-apk
         path: app/build/outputs/apk/release/app-release.apk
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v1.0.${{ github.run_number }}
-        release_name: GitHub Repo Viewer v1.0.${{ github.run_number }}
-        body: |
-          ## GitHub Repo Viewer - إصدار موقّع رقمياً
-
-          ### الملفات المتوفرة:
-          - `app-release.apk` ✅ موقّع رقمياً
-          - `app-debug.apk`
-        draft: false
-        prerelease: false
-
-    - name: Upload Signed APK to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: app/build/outputs/apk/release/app-release.apk
-        asset_name: GitHubRepoViewer-v1.0.${{ github.run_number }}-signed.apk
-        asset_content_type: application/vnd.android.package-archive
-
-    - name: Upload Debug APK to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: app/build/outputs/apk/debug/app-debug.apk
-        asset_name: GitHubRepoViewer-v1.0.${{ github.run_number }}-debug.apk
-        asset_content_type: application/vnd.android.package-archive
