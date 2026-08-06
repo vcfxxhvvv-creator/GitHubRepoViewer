@@ -1,38 +1,20 @@
 name: Build APK
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
+    - uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-
-    - name: Grant execute permission for gradlew
-      run: |
+    - run: |
         gradle wrapper --gradle-version 8.2
-        chmod +x gradlew
-
-    - name: Decode Keystore
-      run: echo "${{ secrets.SIGNING_KEYSTORE }}" | base64 -d > app/keystore.jks
-
-    - name: Build Signed APK
-      run: |
-        ./gradlew assembleRelease           -Pandroid.injected.signing.store.file=keystore.jks           -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}           -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}           -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-      working-directory: app
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+        ./gradlew assembleDebug
+    - uses: actions/upload-artifact@v4
       with:
-        name: signed-apk
-        path: app/build/outputs/apk/release/app-release.apk
+        name: apk
+        path: app/build/outputs/apk/debug/*.apk
