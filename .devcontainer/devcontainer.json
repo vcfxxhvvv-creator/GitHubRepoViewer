@@ -1,0 +1,11 @@
+{
+  "name": "Android Build Environment",
+  "image": "mingc/android-build-box:latest",
+  "features": {},
+  "postCreateCommand": "gradle wrapper --gradle-version 8.2 && chmod +x gradlew",
+  "customizations": {
+    "vscode": {
+      "extensions": ["vscjava.vscode-gradle"]
+    }
+  }
+}
