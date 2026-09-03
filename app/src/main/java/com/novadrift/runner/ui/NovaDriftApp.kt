@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.awaitPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.LocalContext
@@ -156,9 +155,7 @@ fun NovaDriftApp() {
                         apply(down.position)
                         while (true) {
                             val event = awaitPointerEvent()
-                            if (event.type == PointerEventType.Release ||
-                                event.type == PointerEventType.Cancel
-                            ) {
+                            if (event.type == PointerEventType.Release) {
                                 break
                             }
                             val change = event.changes.firstOrNull { it.id == id } ?: break

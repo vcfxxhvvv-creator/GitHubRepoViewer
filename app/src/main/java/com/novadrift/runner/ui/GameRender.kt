@@ -7,6 +7,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import com.novadrift.runner.game.Asteroid
 import com.novadrift.runner.game.GamePhase
 import com.novadrift.runner.game.NovaGame
@@ -18,7 +21,10 @@ import kotlin.math.max
 import kotlin.math.sin
 
 object NovaPalette {
+    val DeepSpace = Color(0xFF05060F)
     val Cyan = Color(0xFF3FE0FF)
+    val CyanSoft = Color(0xFFBFF9FF)
+    val Orange = Color(0xFFFF9F43)
     val White = Color(0xFFFFFFFF)
     val Flame = Color(0xFFFFA24D)
     val Hull = Color(0xFFDCE8FF)
@@ -116,7 +122,7 @@ fun DrawScope.drawScene(game: NovaGame) {
     )
 }
 
-private fun drawAsteroid(rock: Asteroid) {
+private fun DrawScope.drawAsteroid(rock: Asteroid) {
     val r = rock.r
     if (r <= 0f) return
     val n = rock.offsets.size
@@ -146,7 +152,7 @@ private fun drawAsteroid(rock: Asteroid) {
     )
 }
 
-private fun drawOrb(orb: Orb, time: Float) {
+private fun DrawScope.drawOrb(orb: Orb, time: Float) {
     val pulse = 1f + 0.22f * sin(time * 4f + orb.phase)
     drawCircle(
         brush = Brush.radialGradient(
@@ -168,7 +174,7 @@ private fun drawOrb(orb: Orb, time: Float) {
     )
 }
 
-private fun drawParticle(p: Particle) {
+private fun DrawScope.drawParticle(p: Particle) {
     val t = (p.life / p.maxLife).coerceIn(0f, 1f)
     drawCircle(
         color = withAlpha(p.color, t),
@@ -177,7 +183,7 @@ private fun drawParticle(p: Particle) {
     )
 }
 
-private fun drawShip(game: NovaGame, u: Float) {
+private fun DrawScope.drawShip(game: NovaGame, u: Float) {
     val boosting = game.boosting
     val x = game.shipX
     val y = game.shipY
