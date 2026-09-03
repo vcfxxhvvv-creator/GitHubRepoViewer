@@ -62,36 +62,36 @@ jobs:
       run: |
         export ANDROID_HOME=/usr/local/android-sdk
         export ANDROID_SDK_ROOT=/usr/local/android-sdk
+        # Give the runner its own writable keystore dir (fixes "debug keystore ... not writable")
+        export ANDROID_USER_HOME="$HOME/.android"
+        mkdir -p "$ANDROID_USER_HOME"
         ./gradlew assembleDebug --stacktrace
         ls -la app/build/outputs/apk/debug/
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: GitHubRepoViewer-APK
+        name: NovaDrift-APK
         path: app/build/outputs/apk/debug/app-debug.apk
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v1.0.${{ github.run_number }}
-        name: GitHub Repo Viewer v1.0.${{ github.run_number }}
+        name: Nova Drift v1.0.${{ github.run_number }}
         files: app/build/outputs/apk/debug/app-debug.apk
         body: |
-          ## 🚀 GitHub Repo Viewer - APK جاهز!
+          ## 🚀 Nova Drift - Space Runner
 
-          **✅ تم البناء بنجاح**
+          **✅ Build succeeded — APK ready**
 
-          📥 **رابط التحميل:**
-          ⬇️ [app-debug.apk](https://github.com/vcfxxhvvv-creator/GitHubRepoViewer/releases/download/v1.0.${{ github.run_number }}/app-debug.apk)
+          📥 Download **app-debug.apk** from the workflow artifacts or this release.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Print Download Link
+    - name: Print Summary
       run: |
         echo "=========================================="
-        echo "✅ APK تم البناء بنجاح!"
-        echo "=========================================="
-        echo "📥 رابط التحميل:"
-        echo "https://github.com/vcfxxhvvv-creator/GitHubRepoViewer/releases/download/v1.0.${{ github.run_number }}/app-debug.apk"
+        echo "✅ APK built successfully!"
+        echo "📦 Artifact: NovaDrift-APK"
         echo "=========================================="

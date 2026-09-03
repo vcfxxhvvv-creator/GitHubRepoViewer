@@ -1,8 +1,3 @@
 <resources>
-    <string name="app_name">GitHub Repo Viewer</string>
-    <string name="search_hint">ابحث عن مستخدم GitHub...</string>
-    <string name="repos_title">المستودعات</string>
-    <string name="followers">متابعون</string>
-    <string name="following">يتابع</string>
-    <string name="search">بحث</string>
+    <string name="app_name">Nova Drift</string>
 </resources>

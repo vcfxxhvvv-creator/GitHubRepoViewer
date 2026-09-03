@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "GitHubRepoViewer"
+rootProject.name = "NovaDrift"
 include ':app'

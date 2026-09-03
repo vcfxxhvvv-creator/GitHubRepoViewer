@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.GitHubRepoViewer" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/github_dark</item>
+    <style name="Theme.NovaDrift" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/space_deep</item>
+        <item name="android:statusBarColor">@color/space_deep</item>
+        <item name="android:navigationBarColor">@color/space_deep</item>
     </style>
 </resources>
